@@ -33,3 +33,8 @@ runs/
 
 # Dependencies
 node_modules/
+
+# Repository metadata and custom packages supplied through named build contexts
+.git
+searchbatch/
+fuchel/

@@ -41,14 +41,22 @@ COPY . .
 RUN sed -i'' -e 's/"opencv-python/"opencv-python-headless/' pyproject.toml
 ADD https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26n.pt .
 
+# Copy custom packages from named build contexts.
+COPY --from=searchbatch /pyproject.toml /opt/searchbatch/
+COPY --from=searchbatch /searchbatch /opt/searchbatch/searchbatch
+COPY --from=fuchel /pyproject.toml /README.md /opt/fuchel/
+COPY --from=fuchel /src /opt/fuchel/src
+
 # Install pip packages (uv already installed in base image)
-RUN uv pip install --system --no-cache -e "." albumentations faster-coco-eval && \
+RUN uv pip install --system --no-cache -e "." /opt/searchbatch /opt/fuchel \
+    nvitop pandas imageio easyfont pycvt albumentations faster-coco-eval && \
     rm -rf tmp /root/.config/Ultralytics/persistent_cache.json
 
 # Usage --------------------------------------------------------------------------------------------------------------
 
 # Production builds: https://github.com/ultralytics/ultralytics/blob/main/.github/workflows/docker.yml
-# Example (build): t=ultralytics/ultralytics:latest && docker build -f docker/Dockerfile -t $t .
+# Example (build): docker build -f docker/Dockerfile -t ultralytics-custom:latest \
+#     --build-context searchbatch=/path/to/searchbatch --build-context fuchel=/path/to/fuchel .
 # Example (push): docker push $t
 # Example (pull): t=ultralytics/ultralytics:latest && docker pull $t
 # Example (run-gpu): docker run -it --ipc=host --device nvidia.com/gpu=all $t
