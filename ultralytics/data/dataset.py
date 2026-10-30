@@ -297,6 +297,9 @@ class YOLODataset(BaseDataset):
         """
         label_files = self.get_label_files()
         cache_path = Path(label_files[0]).parent.with_suffix(".cache")
+        if self.cache_dir:
+            cache_path = get_cache_file_path(cache_path, self.cache_dir).with_suffix(".cache")
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
         cache, exists = self._load_or_scan_cache(cache_path, self.get_cache_hash())
 
         # Display cache
@@ -799,6 +802,9 @@ class GroundingDataset(YOLODataset):
             (list[dict]): List of label dictionaries, each containing information about an image and its annotations.
         """
         cache_path = Path(self.json_file).with_suffix(".cache")
+        if self.cache_dir:
+            cache_path = get_cache_file_path(cache_path, self.cache_dir).with_suffix(".cache")
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
         cache, _ = self._load_or_scan_cache(cache_path, self.get_cache_hash())
         [cache.pop(k) for k in ("hash", "version")]  # remove items
         labels = cache["labels"]

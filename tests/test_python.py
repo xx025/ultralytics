@@ -18,6 +18,7 @@ import torch
 from PIL import Image
 
 import ultralytics.data.build as data_build
+import ultralytics.data.utils as data_utils
 from tests import CFG, MODEL, MODELS, SOURCE, SOURCES_LIST, TASK_MODEL_DATA
 from ultralytics import RTDETR, YOLO
 from ultralytics.cfg import get_cfg
@@ -2127,6 +2128,8 @@ def test_disk_cache_dir(tmp_path):
     cfg = get_cfg(overrides={"data": "coco8.yaml", "imgsz": 32, "cache": str(cache_dir)})
     dataset = data_build.build_yolo_dataset(cfg, data["train"], batch=2, data=data, mode="train")
     assert cache_dir in dataset.npy_files[0].parents and dataset.npy_files[0].exists()
+    source_cache = Path(dataset.label_files[0]).parent.with_suffix(".cache")
+    assert data_utils.get_cache_file_path(source_cache, cache_dir).with_suffix(".cache").is_file()
 
     image = tmp_path / "cls" / "class0" / "image.jpg"
     image.parent.mkdir(parents=True)
