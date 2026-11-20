@@ -61,7 +61,7 @@ class BaseDataset(Dataset):
         im_hw (list): List of resized image dimensions (h, w).
         npy_files (list[Path]): List of numpy file paths.
         cache (str | None): Cache setting ('ram', 'disk', or None for no caching).
-        cache_dir (Path | None): Directory holding the *.npy disk caches, or None to cache beside source images.
+        cache_dir (Path | None): Directory holding disk caches, or None to cache beside source files.
         transforms (callable): Image transformation function.
         batch_shapes (np.ndarray): Batch shapes for rectangular training.
         batch (np.ndarray): Batch index of each image.
@@ -162,6 +162,11 @@ class BaseDataset(Dataset):
         self.fraction = get_split_fraction(fraction, "train")
         self.channels = channels
         self.cv2_flag = cv2.IMREAD_GRAYSCALE if channels == 1 else cv2.IMREAD_COLOR
+        self.cache, self.cache_dir = parse_image_cache(cache)
+        if self.cache_dir:
+            self.cache_dir = prepare_cache_dir(self.cache_dir, self.prefix)
+            if self.cache_dir is None:
+                self.cache = None
         self.im_files = self.get_img_files(self.img_path)
         self.labels = self.get_labels()
         self.update_labels(include_class=classes)  # single_cls and include_class
@@ -180,7 +185,6 @@ class BaseDataset(Dataset):
 
         # Cache images (options are cache = True, False, None, "ram", "disk" beside source images, or a custom path)
         self.ims, self.im_hw0, self.im_hw = [None] * self.ni, [None] * self.ni, [None] * self.ni
-        self.cache, self.cache_dir = parse_image_cache(cache)
         self.npy_files = [get_cache_file_path(f, self.cache_dir) for f in self.im_files]
         if self.cache == "ram" and self.check_cache_ram():
             if hyp.deterministic:
